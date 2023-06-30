@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import autores from "../models/Autor.js";
 
 class AutorController {
@@ -15,7 +14,7 @@ class AutorController {
 
   };
 
-  static listarPorId = async (req, res) => {
+  static listarPorId = async (req, res, next) => {
     try {
       const id = req.params.id;
       const autorResultado = await autores.findById(id);
@@ -27,45 +26,42 @@ class AutorController {
       }
 
     } catch (erro) {
-      if (erro instanceof mongoose.Error.CastError) {
-        res.status(404).send({ message: "Dados fornecidos incorretamente" });
-      } else {
-        res.status(400).send({ message: "Id do Autor não localizado" });
-      }
+      next(erro);
     }
   };
 
-  static cadastrarAutor = async (req, res) => {
+  static cadastrarAutor = async (req, res, next) => {
     try {
       let autor = new autores(req.body);
       const autorResultado = await autor.save();
 
       res.status(201).send(autorResultado.toJSON());
-    } catch (error) {
+    } catch (erro) {
       res.status(500).send({ message: "Falha ao cadastrar autor" });
+      next(erro);
     }
   };
 
-  static atualizarAutor = (req, res) => {
-    const id = req.params.id;
-    autores.findByIdAndUpdate(id, { $set: req.body }, (err) => {
-      if (!err) {
-        res.status(200).send({ message: "Autor atualizado com sucesso!" });
-      } else {
-        res.status(500).send({ message: err.message });
-      }
-    });
+  static atualizarAutor = async (req, res, next) => {
+    try {
+      const id = req.params.id;
+      await autores.findByIdAndUpdate(id, { $set: req.body });
+
+      res.status(200).send({ message: "Autor atualizado com sucesso!" });
+    } catch (erro) {
+      next(erro);
+    }
   };
 
-  static excluirAutor = (req, res) => {
-    const id = req.params.id;
-    autores.findByIdAndDelete(id, (err) => {
-      if (!err) {
-        res.status(200).send({ message: "Autor removido com sucesso!" });
-      } else {
-        res.status(500).send({ message: err.message });
-      }
-    });
+  static excluirAutor = async (req, res, next) => {
+    try {
+      const id = req.params.id;
+      await autores.findByIdAndDelete(id);
+    
+      res.status(200).send({ message: "Autor removido com sucesso!" });
+    } catch (erro) {
+      next(erro);
+    }
   };
 
 
